@@ -1,5 +1,5 @@
 #Roblox Tweaker
-VERSION = ["2.2", "Stable"]
+VERSION = ["2.3", "Stable"]
 
 #Imports
 from os import environ as os_environ, name as os_name
@@ -35,12 +35,12 @@ class RobloxTweaker():
     def __init__(self):
         out_title(f"Roblox Tweaker v{VERSION[0]} {VERSION[1]}")
         out_clear()
-        
-        self.running = True
+            
+        running = True
                 
         self._roblox_versions_path = os_environ["LocalAppData"]+"/Roblox/Versions"
         self._textures_folders_path = "PlatformContent/pc/textures"
-                
+            
         self._exception_texs = ["sky", "brdfLUT.dds", "studs.dds", "wangIndex.dds"]
         
         self.path_file = ouf_File("path.txt")
@@ -49,17 +49,16 @@ class RobloxTweaker():
         
         if not self.path_file.exists():
             print("[Path File Not Found.]")
-            self.writepath()
+            self.writepath(True, True, False)
             out_clear()
             
         if self.path_file.exists:
             self.path = self.path_file.read()
             self.path_folder = ouf_Folder("", self.path)
         
-        while self.running:
-            print(f"Roblox Tweaker v{VERSION[0]} {VERSION[1]}")
-            print("What do you want to do?\n")
-            print("[1]Delete Textures\n[2]Show Textures List\n[3]Update Roblox Version Path\n[4]Backup Textures\n[5]Restore Textures from Backup\n[0]Exit\n")
+        while running:
+            print(f"Roblox Tweaker v{VERSION[0]} {VERSION[1]}\n")
+            print("[1]Delete Textures\n[2]Show Textures List\n[3]Update Roblox Version Path\n[4]Backup Textures\n[5]Restore Textures from Backup\n[0]Exit\n\n[A]About\n")
             print(f"Current Roblox Version Path:\n\"{self.path}\"\nType: {self.gettype()}")
             _selected_option = input(">")
             
@@ -82,10 +81,23 @@ class RobloxTweaker():
                   
             elif _selected_option in ["E", "e", "0"]:
                 out_clear()
-                self.running = False
+                running = False
+                
+            elif _selected_option in ["A", "a"]:
+                self.about()
                 
             else:
                 out_clear()
+    
+    #About
+    def about(self):
+        out_clear()
+        print("[About]\n")
+        print("Roblox Tweaker made by OhRetro.")
+        print(f"Version: {VERSION[0]} {VERSION[1]}")
+        print("Repository: https://github.com/OhRetro/Roblox-Tweaker \n")
+        out_waitinput()
+        out_clear()
         
     #Delete Textures
     def deletetextures(self):
@@ -94,29 +106,26 @@ class RobloxTweaker():
         textures_list = textures_path.list()
         
         option = None
-        while option not in ["a", "all", "l", "leave"]:        
+        while option not in ["a", "all", "l", "leave", "c", "cancel"]:        
             print("[Delete Textures]\n")
-            print("Do you want to delete ALL textures or leave some untouched?\n")
-            option = input("[A]ll\n[L]eave (Default) (Recommended)\n\n>") or "l"
+            print("Do you want to delete ALL textures or leave some untouched?\nIt is recommended to backup if You are going to delete All.\n")
+            option = input("[A]ll\n[L]eave (Default) (Recommended)\n[C]ancel\n\n>")
+            out_clear()
+        
+        if option.lower() not in ["c", "cancel"]:
+            ouo_countdown(3, "Deleting Textures in ", "Deleting Textures...")
         
         if option.lower() in ["l", "leave"]:
             textures_path.deletecontents(self._exception_texs)
             
-        elif option.lower() in ["a", "all"]:
-            option = None
-            while option not in ["y", "yes", "n", "no"]:
-                out_clear()
-                print("Do you want to backup the textures before deleting?\n")
-                option = input("[Y]es (Default) (Recommended)\n[N]o\n\n>") or "y"
-            
-            if option.lower() in ["y", "yes"]:
-                self.backuptextures()
-                out_clear()
-                
-            ouo_countdown(3, "Deleting Textures in ", "Deleting Textures...")     
-                
+        elif option.lower() in ["a", "all"]:                              
             textures_path.deletecontents()
-    
+
+        elif option.lower() in ["c", "cancel"]:
+            out_clear()
+            print("[Operation Cancelled]\n")
+            return
+        
         out_clear()
         
         if len(textures_list) <= len(self._exception_texs):
@@ -185,12 +194,31 @@ class RobloxTweaker():
         out_clear()
         
     #Write File
-    def writepath(self):
-        while True:
+    #Should I bring how C# Edition does it?
+    def writepath(self, force:bool=False, message:bool=True, clear:bool=True):
+        if clear: out_clear()
+        if message:
+            print("[Please wait for Directory Dialog to appear]\n[If it doesn't appear after a while, try reopening the program]")
+            
+        if force:
+            selectd = False
+            while not selectd:
+                roblox_version_path = ouf_folderselect("Select a Roblox Version", self._roblox_versions_path, True)
+                
+                if type(roblox_version_path) != NoneType and roblox_version_path.split("/")[-1].startswith("version-"):
+                    selectd = True
+        
+        else:
             roblox_version_path = ouf_folderselect("Select a Roblox Version", self._roblox_versions_path, True)
             
-            if type(roblox_version_path) != NoneType and roblox_version_path.split("/")[-1].startswith("version-"):
-                break
+            out_clear()
+            if roblox_version_path == "":
+                print("[Operation Cancelled]\n")
+                return
+            
+            elif not roblox_version_path.split("/")[-1].startswith("version-"):
+                print("[Invalid Path]\n")
+                return
             
         self.path_file.write(roblox_version_path)
         out_clear()
