@@ -1,8 +1,5 @@
 ﻿//Roblox Tweaker
 
-using DiscordRPC;
-using DiscordRPC.Logging;
-
 namespace RobloxTweaker
 {
     internal class Program
@@ -13,39 +10,16 @@ namespace RobloxTweaker
         const string NAME_VERSION = NAME + " v" + VERSION;
         const string REPOSITORY = "https://github.com/OhRetro/Roblox-Tweaker";
 
-        static string ROBLOX_VERSIONS_DIR = Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\Roblox\\Versions";
+        static readonly string ROBLOX_VERSIONS_DIR = Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\Roblox\\Versions";
         static string ROBLOX_VERSION_DIR = "Not Set";
         static string ROBLOX_VERSION_DIR_TYPE = "Not Set";
-        const string ROBLOX_VERSION_DIR_FILE = "./roverdir.txt";
+        const string ROBLOX_VERSION_DIR_FILE = ".\\roverdir.txt";
 
         static string ROBLOX_TEXTURE_DIR = "Not Set";
-        static string[] EXCEPTION_TEXTURES = { "sky", "brdfLUT.dds", "studs.dds", "wangIndex.dds" };
+        static readonly string[] EXCEPTION_TEXTURES = { "sky", "brdfLUT.dds", "studs.dds", "wangIndex.dds" };
 
-        const string BACKUP_DIR = "./TextureBackup";
+        const string BACKUP_DIR = ".\\TextureBackup";
         const string PATH_TO_TEXTURES_DIR = "\\PlatformContent\\pc\\textures";
-
-        //Copy Folder
-        static void CopyFolder(string sourceFolder, string destFolder)
-        {
-            if (!Directory.Exists(destFolder))
-            {
-                Directory.CreateDirectory(destFolder);
-            }
-            string[] files = Directory.GetFiles(sourceFolder);
-            foreach (string file in files)
-            {
-                string name = Path.GetFileName(file);
-                string dest = Path.Combine(destFolder, name);
-                File.Copy(file, dest);
-            }
-            string[] folders = Directory.GetDirectories(sourceFolder);
-            foreach (string folder in folders)
-            {
-                string name = Path.GetFileName(folder);
-                string dest = Path.Combine(destFolder, name);
-                CopyFolder(folder, dest);
-            }
-        }
 
         //Select Roblox Version Directory
         static void SelectRobloxVersion()
@@ -111,6 +85,7 @@ namespace RobloxTweaker
             {
                 Console.WriteLine("[Reading File]");
                 ROBLOX_VERSION_DIR = File.ReadAllText(ROBLOX_VERSION_DIR_FILE);
+                ValidateRobloxVersionDir();
                 ROBLOX_TEXTURE_DIR = ROBLOX_VERSION_DIR + PATH_TO_TEXTURES_DIR;
                 ROBLOX_VERSION_DIR_TYPE = RobloxVersionType(ROBLOX_VERSION_DIR);
                 Thread.Sleep(300);
@@ -269,7 +244,7 @@ namespace RobloxTweaker
             try
             {
                 Console.WriteLine("[Copying Textures]");
-                CopyFolder(ROBLOX_TEXTURE_DIR, BACKUP_DIR);
+                OtherUtils.CopyFolder(ROBLOX_TEXTURE_DIR, BACKUP_DIR);
             }
             catch (Exception)
             {
@@ -289,7 +264,7 @@ namespace RobloxTweaker
             try
             {
                 Console.WriteLine("[Copying Textures]");
-                CopyFolder(BACKUP_DIR, ROBLOX_TEXTURE_DIR);
+                OtherUtils.CopyFolder(BACKUP_DIR, ROBLOX_TEXTURE_DIR);
             }
             catch (Exception)
             {
@@ -390,7 +365,7 @@ namespace RobloxTweaker
         //Validate Roblox Version Directory
         static void ValidateRobloxVersionDir()
         {
-            if (!ROBLOX_VERSION_DIR.StartsWith(ROBLOX_VERSIONS_DIR) && !ROBLOX_VERSION_DIR.Split('\\').Last().StartsWith("version-"))
+            if (!ROBLOX_VERSION_DIR.StartsWith(ROBLOX_VERSIONS_DIR) || !ROBLOX_VERSION_DIR.Split('\\').Last().StartsWith("version-"))
             {
                 Console.WriteLine("[Invalid Roblox Version Directory]");
                 Thread.Sleep(2000);
@@ -415,38 +390,10 @@ namespace RobloxTweaker
         {
             Console.Title = NAME_VERSION;
             Console.Clear();
-
-            DiscordRpcClient client;
-
-            client = new DiscordRpcClient("994756663338864681");
-            client.Logger = new ConsoleLogger() { Level = LogLevel.Warning };
-            client.Initialize();
-            client.SetPresence(new RichPresence()
-            {
-                Details = NAME,
-                State = "Version: " + VERSION,
-                Assets = new Assets()
-                {
-                    LargeImageKey = "rt_logo",
-                    LargeImageText = "Made by " + AUTHOR,
-                    SmallImageKey = "csharp",
-                    SmallImageText = "C# Edition"
-                },
-                Buttons = new Button[]
-                {
-                    new Button()
-                    {
-                        Label = "Repository",
-                        Url = REPOSITORY
-                    }
-                }
-            });
-
+            
             Console.WriteLine("{0} by {1}\n", NAME_VERSION, AUTHOR);
             ReadRobloxVersionDirFile();
             
-            ValidateRobloxVersionDir();
-
             Console.Clear();
 
             int menu;
@@ -501,7 +448,6 @@ namespace RobloxTweaker
                         break;
                 }
             } while (menu != 0);
-            client.Dispose();
         }
     }
 }
